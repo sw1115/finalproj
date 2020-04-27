@@ -1,0 +1,89 @@
+---
+title: "PPOL670 FinalProject"
+author: "Shiying Wang"
+date: "4/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+## Which *Sustainable Development Goals (SDG)* are linked in the country's *National Determined Contributions (NDC)* document?  
+
+This project aims to use supervised machine learning model to identify potential alignment between the targets, actions, policy measures and plans in countries' Nationally Determined Contributions (NDCs) and the targets of the Sustainable Development Goals (SDGs).  
+
+### Keywords
+Sustainable Development Goals, National Determined Contributions, Text Analysis, NLP, Classification
+
+### Data Source
+1. Nationally Determined Contributions submissions: [NDC Registry, UNFCCC.](https://www4.unfccc.int/sites/NDCStaging/Pages/All.aspx)
+2. Sustainable Development Goals: [Sustainable Development Goals Knowledge Platform, United Nations](https://sustainabledevelopment.un.org/sdgs)
+3. NDC-SDG linkages analysis data: [Climate Watch, World Resources Institute.](https://www.climatewatchdata.org/data-explorer/ndc-sdg-linkages?ndc-sdg-linkages-countries=All%20Selected&ndc-sdg-linkages-goals=All%20Selected&ndc-sdg-linkages-sectors=All%20Selected&ndc-sdg-linkages-targets=All%20Selected&page=1)
+
+### Data Loading and Cleaning  
+```{r install_package, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(tm)
+library(qdap)
+library(wordcloud)
+library(topicmodels)
+library(syuzhet)
+library(igraph)
+library(purrr)
+library(maps)
+library(rJava)
+```
+
+```{r read_data}
+linkages <- read.csv("linkages.csv", check.names = FALSE)
+linkages <- linkages[ ,-10] # remove the extra column
+glimpse(linkages)
+```
+
+In our current NDC-SDG linkages database, there are already 9695 observations coming from the analysis on over 190 countries' NDC submissions. For each row, we have the data for nine variables: **country** - the country name; **iso** - the three digit ISO code for that country; **ndc_text** - the specific text extracted from the NDC submission; **goal** - the tagged Sustainable Development Goal for the text from that country's NDC document; **target** - the more specific tagged target under that Sustainable Development Goal; **status** - whether the policy is an existing one or aims to be developed in the future; **sector** - which sector does the policy lie in; **climate_response** - whether it is an adaptation measure or a mitigation one; **type** - whether the text is identifying a specific action or just a needs & gaps to implement other actions.  
+
+In our analysis, the most used variables will be **ndc_text**, **goal** and **target**.
+
+### Exploratory Data Analysis  
+
+#### Summary Statistics for NDC-SDG linkages  
+```{r summary}
+summarise(linkages$goal)
+```
+
+
+#### Treemap: Count  Statistics for NDC-SDG linkages  
+First, we could use tree maps to visualize the count of sustainable development goals mentioned in countries' Nationally Determined Contribution submissions. We can tell from the tree map that, the most frequently mentioned sustainable development goals in countries' NDC submissions are **Goal 7** - Affordable and Clean Energy, **Goal 13** - Climate Action, **Goal 15** - Life on Land and **Goal 2** - Zero Hunger.  
+
+More Specifically, we can further conclude that within each SDG, which targets are mentioned the most frequently. For example, under **Goal 7** - Affordable and Clean Energy, the most popular targets are **Target 7.2** - By 2030, increase substantially the share of renewable energy in the global energy mix, and **Target 7.3** - By 2030, double the global rate of improvement in energy efficiency. 
+
+```{r treemap}
+# library
+library(treemap)
+
+# Build Dataset
+## only keep columns "goal" and "target" 
+tree_linkages <- linkages[, c(3,4)] %>%
+  group_by(goal) %>%
+  count(target)
+
+tree_linkages <- tree_linkages[-1, ]
+
+# treemap
+treemap(tree_linkages,
+        index = c("goal",
+                  "target"),
+        vSize = "n",
+        title = "Count Treemap for Sustainable Development Goals and Targets")
+
+```
+
+
+#### Wordcloud: Trending Words for each Sustainable Development Goals
+
+
