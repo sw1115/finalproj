@@ -1,5 +1,5 @@
 ---
-title: "PPOL670 FinalProject"
+title: "PPOL670 Final Project"
 author: "Shiying Wang"
 date: "4/26/2020"
 output: html_document
@@ -51,13 +51,7 @@ In our analysis, the most used variables will be **ndc_text**, **goal** and **ta
 
 ### Exploratory Data Analysis  
 
-#### Summary Statistics for NDC-SDG linkages  
-```{r summary}
-summarise(linkages$goal)
-```
-
-
-#### Treemap: Count  Statistics for NDC-SDG linkages  
+#### Treemap: Count  Statistics for NDC-SDG Linkages  
 First, we could use tree maps to visualize the count of sustainable development goals mentioned in countries' Nationally Determined Contribution submissions. We can tell from the tree map that, the most frequently mentioned sustainable development goals in countries' NDC submissions are **Goal 7** - Affordable and Clean Energy, **Goal 13** - Climate Action, **Goal 15** - Life on Land and **Goal 2** - Zero Hunger.  
 
 More Specifically, we can further conclude that within each SDG, which targets are mentioned the most frequently. For example, under **Goal 7** - Affordable and Clean Energy, the most popular targets are **Target 7.2** - By 2030, increase substantially the share of renewable energy in the global energy mix, and **Target 7.3** - By 2030, double the global rate of improvement in energy efficiency. 
@@ -84,6 +78,51 @@ treemap(tree_linkages,
 ```
 
 
-#### Wordcloud: Trending Words for each Sustainable Development Goals
+#### Wordcloud: Trending Words for Each Sustainable Development Goals  
+Then we can do some preliminary text processing and create a word cloud to see the trending words for each sustainable development goals linkages.  
+
+Here we use the most frequently tagged goal: **Goal 7** - Affordable and Clean Energy, as an example.  
+```{r wordcloud_goal7}
+goal7 <- linkages %>%
+  filter(goal == "Goal 7 - Affordable and Clean Energy")
+
+goal7_txt <- goal7$ndc_text
+
+# remove special characters
+goal7_txt_chrs <- gsub("[^A-Za-z]", " ", goal7_txt)
+
+# convert to corpus
+goal7_corpus <- goal7_txt_chrs %>%
+  VectorSource() %>%
+  Corpus()
+
+head(goal7_corpus$content)
+
+# convert to lower cases
+goal7_corpus_lwr <- tm_map(goal7_corpus, tolower)
+
+# remove stop words
+goal7_corpus_stpwd <- tm_map(goal7_corpus_lwr, removeWords, stopwords("english"))
+
+# remove extra spaces
+goal7_corpus_final <- tm_map(goal7_corpus_stpwd, stripWhitespace)
+
+# visualize the popular words (top 60 words based on frequency) (using qdap) ---- 
+term_count <- freq_terms(goal7_corpus_final, 60)
+
+# then we can create a vector of custom stop words based on the results
+custom_stop <- c("energy", "use", "will", "mw", "pv", "sub", "including", "s",
+                 "li", "based") # I exclude the word "energy" here to keep the count of words at the relatively same scale.
+
+# remove custom stop words
+goal7_corpus_refined <- tm_map(goal7_corpus_final, removeWords, custom_stop)
+
+# creating a colorful word cloud (using RColorBrewer)
+wordcloud(goal7_corpus_refined, max.words = 50,
+          colors = brewer.pal(6, "Dark2"),
+          scale = c(3, 0.5), 
+          random.order = TRUE)
+```
 
 
+From the wordcloud we can tell that, energy efficiency, renewable energy, electricity and solar are the most popular words in the countries' NDC content tagged to SDG-7.  
