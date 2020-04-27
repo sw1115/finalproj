@@ -62,7 +62,7 @@ First, we could use tree maps to visualize the count of sustainable development 
 
 More Specifically, we can further conclude that within each SDG, which targets are mentioned the most frequently. For example, under **Goal 7** - Affordable and Clean Energy, the most popular targets are **Target 7.2** - By 2030, increase substantially the share of renewable energy in the global energy mix, and **Target 7.3** - By 2030, double the global rate of improvement in energy efficiency. 
 
-```{r treemap}
+```{r treemap_1}
 # library
 library(treemap)
 
