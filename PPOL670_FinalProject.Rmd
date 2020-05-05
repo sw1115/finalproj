@@ -26,15 +26,22 @@ Sustainable Development Goals, National Determined Contributions, Text Analysis,
 
 ### Data Loading and Cleaning  
 ```{r install_package, include=FALSE}
+# data pre-processing packages
 library(tidyverse)
-library(ggplot2)
+library(purrr)
+
+# NLP processing pkgs
 library(tm)
 library(qdap)
-library(wordcloud)
+library(quanteda)
+library(tidytext)
 library(topicmodels)
 library(syuzhet)
 library(igraph)
-library(purrr)
+
+# data visualization packages
+library(ggplot2)
+library(wordcloud)
 library(maps)
 library(rJava)
 ```
@@ -44,8 +51,28 @@ linkages <- read.csv("linkages.csv", check.names = FALSE)
 linkages <- linkages[ ,-10] # remove the extra column
 glimpse(linkages)
 ```
+```{r cleaning}
+# generate unique id for each row
+id <- rownames(linkages)
+linkages <- cbind(id=id, linkages) 
 
-In our current NDC-SDG linkages database, there are already 9695 observations coming from the analysis on over 190 countries' NDC submissions. For each row, we have the data for nine variables: **country** - the country name; **iso** - the three digit ISO code for that country; **ndc_text** - the specific text extracted from the NDC submission; **goal** - the tagged Sustainable Development Goal for the text from that country's NDC document; **target** - the more specific tagged target under that Sustainable Development Goal; **status** - whether the policy is an existing one or aims to be developed in the future; **sector** - which sector does the policy lie in; **climate_response** - whether it is an adaptation measure or a mitigation one; **type** - whether the text is identifying a specific action or just a needs & gaps to implement other actions.  
+# convert character to factor
+linkages$id <- as.factor(linkages$id)
+
+# clean the "goal" variable
+levels(linkages$goal)
+
+# There should be 17 SDGs but here we have 19 levels. So we need to clean the current factors list.
+levels(linkages$goal)[levels(linkages$goal)=='Goal 1 - No Poverty '] <- 'Goal 1 - No Poverty'
+levels(linkages$goal)[levels(linkages$goal)=='Goal 9 - Industry, Innovation and Infrastructure '] <- 'Goal 9 - Industry, Innovation and Infrastructure'
+levels(linkages$goal)[levels(linkages$goal)=='Goal 11 - Sustainable Cities and Communities '] <- 'Goal 11 - Sustainable Cities and Communities'
+levels(linkages$goal)[levels(linkages$goal)=='Goal 12 - Responsible Consumption and Production '] <- 'Goal 12 - Responsible Consumption and Production'
+
+# check again
+levels(linkages$goal)
+```
+
+In our current NDC-SDG linkages database, there are already 9602 observations coming from the analysis on over 190 countries' NDC submissions. For each row, we have the data for nine variables: **country** - the country name; **iso** - the three digit ISO code for that country; **ndc_text** - the specific text extracted from the NDC submission; **goal** - the tagged Sustainable Development Goal for the text from that country's NDC document; **target** - the more specific tagged target under that Sustainable Development Goal; **status** - whether the policy is an existing one or aims to be developed in the future; **sector** - which sector does the policy lie in; **climate_response** - whether it is an adaptation measure or a mitigation one; **type** - whether the text is identifying a specific action or just a needs & gaps to implement other actions.  
 
 In our analysis, the most used variables will be **ndc_text**, **goal** and **target**.
 
@@ -62,7 +89,7 @@ library(treemap)
 
 # Build Dataset
 ## only keep columns "goal" and "target" 
-tree_linkages <- linkages[, c(3,4)] %>%
+tree_linkages <- linkages[, c(4,5)] %>%
   group_by(goal) %>%
   count(target)
 
@@ -124,5 +151,23 @@ wordcloud(goal7_corpus_refined, max.words = 50,
           random.order = TRUE)
 ```
 
-
 From the wordcloud we can tell that, energy efficiency, renewable energy, electricity and solar are the most popular words in the countries' NDC content tagged to SDG-7.  
+
+### Tokenize the data
+
+
+### Remove sparse terms
+
+
+### Document Term Matrix with TF-IDF weighting
+
+
+
+### Classification Modeling (Unigram)
+#### knn
+#### Neural Networ
+#### Naive Bayes
+
+### With bigram and trigram
+
+
