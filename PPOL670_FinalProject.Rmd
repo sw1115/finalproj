@@ -395,7 +395,9 @@ unigram_testing <- testing(split)
 
 We can then run the same code on bigrams matrix to get the training and testing data. Due to computational limitation, I will only run the models on unigrams.
 
-After we created training and testing datasets, we can then train different models on the training dataset and report accuracy on the testing dataset.
+After we created training and testing datasets, we can then train different models on the training dataset and report accuracy on the testing dataset.  
+
+Since the goal here is to get the most accuarte prediction of NDC-SDG linkages, I will focus on the accuracy metrics to choose the optimal model.
 
 #### 5.2 Random Forest
 For random forest model, we can try different numbers of trees to compare the error rates.
@@ -464,11 +466,10 @@ We can see from the accuracies that even given k = 300, the accuracy is only 0.4
 Future improvement: According to the confusion matrix, the balanced accuracy is NA for many classes. So the low accuracy here could be related to my method to split training and testing data, since the distribution of each classes is not quite balanced. A stratified method can be used here to split the training and testing data.
 
 #### Neural Network
-The third model will be the neural network model. A ten-fold cross validation is used here to find the optimal model. 
+The third model will be the neural network model. A ten-fold cross validation is used here to find the optimal model. Due to computational limitation, I only used 100 iterations here. A larger number can be used here to improve the model accuracy.
 ```{r nn_packaegs}
 library(nnet)
 ```
-
 
 ```{r nn_uni, include = FALSE}
 # try different sizes here to see the change of accuracies
@@ -476,7 +477,7 @@ nn_uni <- train(goal ~ .,
                  method = "nnet",
                  tuneGrid = expand.grid(size = seq(3, 5, 1), decay = 0),
                  MaxNWts = 1500,
-                 maxit = 500,
+                 maxit = 100,
                  trControl = trControl,
                  metric = "Accuracy",
                  data = unigram_training)
@@ -487,7 +488,8 @@ The accuracy for each model could be reported here.
 nn_uni
 ```
 
-```{r nn_uni_best}
+According to the accuracy, we should choose size =  for the neural networks model.
+```{r nn_uni_best, include = FALSE}
 nn_uni_final <- train(goal ~ .,
                  method = "nnet",
                  tuneGrid = expand.grid(size = , decay = 0),
@@ -496,7 +498,9 @@ nn_uni_final <- train(goal ~ .,
                  trControl = trControl,
                  metric = "Accuracy",
                  data = unigram_training)
+```
 
+```{r nn_uni_predict}
 nn_uni_final_pred <- predict(nn_uni_final,
                              newdata = unigram_testing,
                              type = "class")
@@ -504,20 +508,9 @@ nn_uni_final_pred <- predict(nn_uni_final,
 nn_uni_final_pred <- as.factor(nn_uni_final_pred)
 confusionMatrix(nn_uni_final_pred, unigram_testing$goal)
 ```
-
+The optimal neural network models here can give us the accuracy of  .
 
 #### Comparison and conclusions
 
-```{r randomforest_bi_50, eval = FALSE}
-rfc_bi_50 <- randomForest(x = as.data.frame(as.matrix(bigram_training)),
-                    y = token2_linkages$goal[train_ind2], nTree = 50)
-rfc_bi_50
-```
-
-```{r randomforest_bi_100, eval = FALSE}
-rfc_bi_100 <- randomForest(x = as.data.frame(as.matrix(bigram_training)),
-                    y = token2_linkages$goal[train_ind2], nTree = 100)
-rfc_bi_100
-```
 
 ### Reference
