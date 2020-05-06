@@ -402,26 +402,31 @@ Since the goal here is to get the most accuarte prediction of NDC-SDG linkages, 
 #### 5.2 Random Forest
 For random forest model, we can try different numbers of trees to compare the error rates.
 ```{r randomforest_uni_50}
-rfc_uni_50 <- randomForest(x = unigram_training[,-414],
+rfc_uni_50 <- randomForest(x = unigram_training[,-232],
                            y = unigram_training$goal,
                            nTree = 50)
 
 rfc_uni_50
 ```
 
+OOB Error rate is 45.2% for nTree = 50.  
+
 ```{r randomforest_uni_100}
-rfc_uni_100 <- randomForest(x = unigram_training[,-414],
+rfc_uni_100 <- randomForest(x = unigram_training[,-232],
                             y = unigram_training$goal,
                             nTree = 100)
 rfc_uni_100
 ```
+OOB Error rate is 45.3% for nTree = 100.  
 
+So we can choose nTree = 100 as our final random forest model based on the balance of computational difficulties and model accuracy.
 ```{r predict_rfc}
 rfc_uni_100_pred <- predict(rfc_uni_100,
                            newdata = unigram_testing)
 
 confusionMatrix(unigram_testing$goal, rfc_uni_100_pred)
 ```
+We can see from the accuracies that given nTree = 100, we can get the accuracy of 0.552. 
 
 #### 5.3 KNN
 We can also test a knn model to see the accuracies. First apply a 10 folds cross validation to the data.
@@ -488,13 +493,13 @@ The accuracy for each model could be reported here.
 nn_uni
 ```
 
-According to the accuracy, we should choose size =  for the neural networks model.
+According to the accuracy, we should choose size = 5 for the neural network model.
 ```{r nn_uni_best, include = FALSE}
 nn_uni_final <- train(goal ~ .,
                  method = "nnet",
-                 tuneGrid = expand.grid(size = , decay = 0),
+                 tuneGrid = expand.grid(size = 5, decay = 0),
                  MaxNWts = 1500,
-                 maxit = 500,
+                 maxit = 100,
                  trControl = trControl,
                  metric = "Accuracy",
                  data = unigram_training)
@@ -503,14 +508,33 @@ nn_uni_final <- train(goal ~ .,
 ```{r nn_uni_predict}
 nn_uni_final_pred <- predict(nn_uni_final,
                              newdata = unigram_testing,
-                             type = "class")
+                             type = "raw")
 
 nn_uni_final_pred <- as.factor(nn_uni_final_pred)
 confusionMatrix(nn_uni_final_pred, unigram_testing$goal)
 ```
-The optimal neural network models here can give us the accuracy of  .
+The optimal neural network models here can give us the accuracy of 0.54.  
+Future Improvement: According to the confusion matrix, the positive prediction values for Goal 1, 4, 5, 8, 10, 16 are all zero. It may caused by the unbalanced distribution of classes in our sample data. So I need to consider a better split method before training the model.
 
-#### Comparison and conclusions
+#### Comparison and conclusions  
+We need to consider both computational feasibility and model accuracy here when we are choosing the optimal model.  
+
+```{r final}
+final <-unigram_testing %>%
+  cbind(rfc_uni_100_pred) %>%
+  cbind(knn_uni_final_pred) %>%
+  cbind(nn_uni_final_pred)
+
+final <- final[, c(232, 233, 234, 235)]
+```
+
+```{r}
+for (i in 1:1920){
+  if (final[1] == final[2]){
+    
+  }
+}
+```
 
 
 ### Reference
