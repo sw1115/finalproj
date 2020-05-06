@@ -529,4 +529,11 @@ final_accuracy
 ```
 According to the summary table, we can tell that the random forest model with nTree = 100 can yield the largest accuracy. Due to time and computational limitation I didn't use stratified method to split the training and testing dataset, and only unigrams are used in my models. Bigrams can also be used here to get a higher accuracy. 
 
-### Reference
+### References
+1. [Text Mining with R](https://www.tidytextmining.com/dtm.html)
+2. [Nature Languages Corpus Data](http://norvig.com/ngrams/ch14.pdf)
+3. [Supervised Learning in R: Classification](https://learn.datacamp.com/courses/supervised-learning-in-r-classification)
+4. [Deep NLP - Triples](https://www.kaggle.com/manoharswamynathan/deep-nlp-triples)
+
+
+
