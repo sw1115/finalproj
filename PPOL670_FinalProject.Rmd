@@ -51,6 +51,7 @@ linkages <- read.csv("linkages.csv", check.names = FALSE)
 linkages <- linkages[ ,-10] # remove the extra column
 glimpse(linkages)
 ```
+
 ```{r cleaning}
 # generate unique id for each row
 id <- rownames(linkages)
@@ -402,8 +403,6 @@ bigram_training <- dtm_bigram[train_ind2, ]
 bigram_testing <- dtm_bigram[-train_ind2, ]
 ```
 
-Due to computation cost consideration, I didn't include cross-validation here.
-
 After we created training and testing datasets, we can then train different models on the training dataset and report accuracy on the testing dataset.
 
 #### 5.2 Random Forest  
@@ -434,12 +433,42 @@ rfc_bi_100
 
 ```{r predict_rfc}
 rfc_predict
+
+
+
+
+
 ```
 
-#### 5.3 knn  
-We can also test a knn model to see the
+#### 5.3 KNN  
+
+We can also test a knn model to see the acuracies.
+First we Apply a 10 folds cross validation to the data.
 ```{r knn_uni}
+knn_uni_training <- as.data.frame(as.matrix(unigram_training))
+knn_uni_training <- cbind(knn_uni_training, token1_linkages$goal[train_ind1])
+names(knn_uni_training)[232] <- "goal"
+
+# rule of thumb: k should be around the square root of the sample size.
 k = sqrt(sample_size1)
+
+# 10-fold cross validation
+trControl <- trainControl(method = "cv",
+                          number = 10)
+
+```
+
+Then estimate the model with at least three different values of k. Here we choose 80, 200 and 1000.
+```{r knn_uni}
+# 
+knn_uni <- train(goal ~ .,
+                 method = "knn",
+                 tuneGrid = expand.grid(k = c(80, 200, 1000)),
+                 trControl = trControl,
+                 metric = "Accuracy",
+                 data = knn_uni_training)
+knn_uni
+
 
 # so we could use k = 88 here.
 knn_uni <-
@@ -447,14 +476,35 @@ knn_uni <-
                    neighbors = 88) %>%
   set_engine(engine = "kknn") %>%
   fit(
-    formula = token1_linkages$goal[train_ind1] ~ as.data.frame(as.matrix(bigram_training),
-                                                               data = unigram_training)
-)
+    formula = goal ~ ., data = knn_uni_training)
+
+
 
 ```
 
 
 #### Neural Network
+```{r nn_packaegs}
+library(tensorflow)
+library(keras)
+library(nnet)
+```
+
+```{r layer}
+nn_uni <- nnet(goal ~ ., data = test,
+               size = 2,
+               maxit = 100)
+summary(nn_uni)
+
+test$pred_nn_training <- predict(nn_uni, test, type = "class")
+mtab <- table(test$pred_nn_training, test$goal)
+confusionMatrix(mtab)
+
+mtab
+
+
+```
+
 #### Naive Bayes
 #### Comparison and conclusions
 
