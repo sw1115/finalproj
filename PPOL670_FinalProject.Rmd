@@ -12,19 +12,19 @@ knitr::opts_chunk$set(include = TRUE)
 knitr::opts_chunk$set(warning = FALSE)
 ```
 
-## Which *Sustainable Development Goals (SDG)* are linked in the country's *National Determined Contributions (NDC)* document?
+## Which *Sustainable Development Goals (SDG)* are linked in the country's *National Determined Contributions (NDC)* document?  
 
 This project aims to use supervised machine learning model to identify potential alignment between the targets, actions, policy measures and plans in countries' Nationally Determined Contributions (NDCs) and the targets of the Sustainable Development Goals (SDGs).
 
-### Keywords
+### Keywords  
 Sustainable Development Goals, National Determined Contributions, Text Analysis, NLP, Classification
 
-### Data Source
+### Data Source  
 1. Nationally Determined Contributions submissions: [NDC Registry, UNFCCC.](https://www4.unfccc.int/sites/NDCStaging/Pages/All.aspx)
 2. Sustainable Development Goals: [Sustainable Development Goals Knowledge Platform, United Nations](https://sustainabledevelopment.un.org/sdgs)
 3. NDC-SDG linkages analysis data: [Climate Watch, World Resources Institute.](https://www.climatewatchdata.org/data-explorer/ndc-sdg-linkages?ndc-sdg-linkages-countries=All%20Selected&ndc-sdg-linkages-goals=All%20Selected&ndc-sdg-linkages-sectors=All%20Selected&ndc-sdg-linkages-targets=All%20Selected&page=1)
 
-### 1. Data Loading and Cleaning
+### 1. Data Loading and Cleaning  
 ```{r install_package, include=FALSE}
 # data pre-processing packages
 library(tidyverse)
@@ -89,9 +89,9 @@ In our current NDC-SDG linkages database, there are already 9602 observations co
 
 In our analysis, the most used variables will be **ndc_text**, **goal** and **target**.
 
-### 2. Exploratory Data Analysis
+### 2. Exploratory Data Analysis  
 
-#### 2.1 Treemap: Count  Statistics for NDC-SDG Linkages
+#### 2.1 Treemap: Count  Statistics for NDC-SDG Linkages  
 First, we could use tree maps to visualize the count of sustainable development goals mentioned in countries' Nationally Determined Contribution submissions. We can tell from the tree map that, the most frequently mentioned sustainable development goals in countries' NDC submissions are **Goal 7** - Affordable and Clean Energy, **Goal 13** - Climate Action, **Goal 15** - Life on Land and **Goal 2** - Zero Hunger.
 
 More Specifically, we can further conclude that within each SDG, which targets are mentioned the most frequently. For example, under **Goal 7** - Affordable and Clean Energy, the most popular targets are **Target 7.2** - By 2030, increase substantially the share of renewable energy in the global energy mix, and **Target 7.3** - By 2030, double the global rate of improvement in energy efficiency.
@@ -118,7 +118,7 @@ treemap(tree_linkages,
 ```
 
 
-#### 2.2 Wordcloud: Trending Words for Each Sustainable Development Goals
+#### 2.2 Wordcloud: Trending Words for Each Sustainable Development Goals  
 Then we can do some preliminary text processing and create a word cloud to see the trending words for each sustainable development goals linkages.
 
 Here we use the most frequently tagged goal: **Goal 7** - Affordable and Clean Energy, as an example.
@@ -167,7 +167,7 @@ wordcloud(goal7_corpus_refined, max.words = 50,
 
 From the wordcloud we can tell that, energy efficiency, renewable energy, electricity and solar are the most popular words in the countries' NDC content tagged to SDG-7.
 
-### 3. Tokenize the data
+### 3. Tokenize the data  
 Then we may want to break the text into individual tokens which are simply individual words. Function **unnest_tokens** will be used here.
 
 First we can tidy the data by removing special characters.
@@ -186,7 +186,7 @@ ndc_text <- gsub("[^A-Za-z]", " ", ndc_text)
 new_linkages$ndc_text <- ndc_text
 ```
 
-#### 3.1 Unigram
+#### 3.1 Unigram  
 Then we can create unigram, which only has one word in each individual tokens. Extra spaces and stop words should also be removed here.
 ```{r token_unigram}
 # break text into unigram
@@ -205,7 +205,7 @@ head(token1_linkages, 10)
 
 ```
 
-#### 3.2 Bigram
+#### 3.2 Bigram  
 Since tokenizing sentences to a unigram sometimes ignores the meaning of a word group collectively, we could further use a two word sequences which is "bigram".
 ```{r token_bigram}
 token2_linkages <- new_linkages %>%
@@ -235,10 +235,10 @@ head(token2_linkages, 10)
 
 ```
 
-### 4. Document Term Matrix with TF-IDF weighting
+### 4. Document Term Matrix with TF-IDF weighting  
 Term frequency and inverse document frequency (TF-IDF) can help us decrease the weight of the common words, which are words that appear in all 17 goals. For those common words, both idf and thus tf-idf will be zero.
 
-#### 4.1 Unigram
+#### 4.1 Unigram  
 ```{r tfidf1}
 # calculate the number of times that the unigram is used in that goal
 unigram_tfidf <- token1_linkages %>%
@@ -265,7 +265,7 @@ unigram_tfidf %>%
   coord_flip()
 ```
 
-#### 4.2 Bigram
+#### 4.2 Bigram  
 ```{r tfidf2}
 # calculate the number of times that the bigram is used in that goal
 bigram_tfidf <- token2_linkages %>%
@@ -289,7 +289,7 @@ bigram_tfidf %>%
   coord_flip()
 ```
 
-#### 4.3 Remove sparse terms
+#### 4.3 Remove sparse terms  
 Now we can continue preparing the data to create the document term matrix with tf-idf weight.
 
 * Document-term matrix for unigrams
@@ -365,8 +365,8 @@ dtm_bigram <- dtm_bigram %>%
 dtm_bigram
 ```
 
-### 5. Classification Modeling (Unigram)
-#### 5.1 Split the data
+### 5. Classification Modeling (Unigram)  
+#### 5.1 Split the data  
 After we created the document-term matrix with TFIDF weighting for modeling, we can split the data to training and testing datasets. Put the testing set under lock and key.
 ```{r split_unigram}
 # load packages for modeling
@@ -406,7 +406,7 @@ Due to computation cost consideration, I didn't include cross-validation here.
 
 After we created training and testing datasets, we can then train different models on the training dataset and report accuracy on the testing dataset.
 
-#### 5.2 Random Forest
+#### 5.2 Random Forest  
 For random forest model, we can try different numbers of trees to compare the error rates.
 ```{r randomforest_uni_50}
 rfc_uni_50 <- randomForest(x = as.data.frame(as.matrix(unigram_training)),
@@ -436,7 +436,7 @@ rfc_bi_100
 rfc_predict
 ```
 
-#### 5.3 knn
+#### 5.3 knn  
 We can also test a knn model to see the
 ```{r knn_uni}
 k = sqrt(sample_size1)
