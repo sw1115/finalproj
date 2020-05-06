@@ -435,7 +435,7 @@ confusionMatrix(unigram_testing$goal, rfc_uni_50_pred)
 
 #### 5.3 KNN  
 We can also test a knn model to see the accuracies. First apply a 10 folds cross validation to the data.
-```{r knn_uni}
+```{r knn_cv}
 # 10-fold cross validation
 trControl <- trainControl(method = "cv",
                           number = 10)
@@ -464,7 +464,6 @@ knn_uni_final <- train(goal ~ .,
 knn_uni_final_pred <- predict(knn_uni_final,
                               newdata = unigram_testing)
 confusionMatrix(unigram_testing$goal, knn_uni_final_pred)
-
 ```
 We can see from the accuracies that even given k = 300, the accuracy is only 0.42. So knn could be too computationally expensive here.  
 
@@ -476,18 +475,24 @@ library(nnet)
 ```
 
 ```{r layer}
-nn_uni <- nnet(goal ~ ., data = test,
+nn_uni_100 <- nnet(goal ~ .,
+               data = unigram_training,
                size = 2,
                maxit = 100)
-summary(nn_uni)
+summary(nn_uni_100)
 
-test$pred_nn_training <- predict(nn_uni, test, type = "class")
-mtab <- table(test$pred_nn_training, test$goal)
+# try different maxit here to see the accuracies
+nn_uni_1000 <- nnet(goal ~ .,
+               data = unigram_training,
+               size = 2,
+               maxit = 1000)
 
-confusionMatrix(mtab)
+nn_uni_final_pred <- predict(nn_uni_1000, 
+                             newdata = unigram_testing,
+                             type = "class")
 
-mtab
-
+nn_uni_final_pred <- as.factor(nn_uni_final_pred)
+confusionMatrix(nn_uni_final_pred, unigram_testing$goal)
 ```
 
 
@@ -503,10 +508,6 @@ rfc_bi_50
 rfc_bi_100 <- randomForest(x = as.data.frame(as.matrix(bigram_training)),
                     y = token2_linkages$goal[train_ind2], nTree = 100)
 rfc_bi_100
-
-
 ```
-
-
 
 ### Reference
