@@ -380,13 +380,17 @@ library(randomForest)
 # set the seed
 set.seed(seed = 20200505)
 
+# tidying data for modeling
+uni_sample <- as.data.frame(as.matrix(dtm_unigram))
+uni_sample <- uni_sample[order(as.numeric(rownames(uni_sample))),,drop=FALSE]
+uni_sample <- cbind(uni_sample, goal = new_linkages$goal)
+
 # create a split object. Here we set the proportion as 0.8.
-sample_size1 <- floor(0.8*nrow(dtm_unigram))
-train_ind1 <- sample(nrow(dtm_unigram), size = sample_size1)
+split <- initial_split(uni_sample, prop = 0.8)
 
 # use the split object to create training and testing data
-unigram_training <- dtm_unigram[train_ind1, ]
-unigram_testing <- dtm_unigram[-train_ind1, ]
+unigram_training <- training(split)
+unigram_testing <- testing(split)
 ```
 
 We can then run the same code on bigrams matrix to get the training and testing data.
@@ -408,80 +412,61 @@ After we created training and testing datasets, we can then train different mode
 #### 5.2 Random Forest  
 For random forest model, we can try different numbers of trees to compare the error rates.
 ```{r randomforest_uni_50}
-rfc_uni_50 <- randomForest(x = as.data.frame(as.matrix(unigram_training)),
-                    y = token1_linkages$goal[train_ind1], nTree = 50)
+rfc_uni_50 <- randomForest(x = unigram_training[,-414],
+                           y = unigram_training$goal, 
+                           nTree = 50)
+
 rfc_uni_50
 ```
 
 ```{r randomforest_uni_100}
-rfc_uni_100 <- randomForest(x = as.data.frame(as.matrix(unigram_training)),
-                    y = token1_linkages$goal[train_ind1], nTree = 100)
+rfc_uni_100 <- randomForest(x = unigram_training[,-414],
+                            y = unigram_training$goal,
+                            nTree = 100)
 rfc_uni_100
 ```
 
-```{r randomforest_bi_50}
-rfc_bi_50 <- randomForest(x = as.data.frame(as.matrix(bigram_training)),
-                    y = token2_linkages$goal[train_ind2], nTree = 50)
-rfc_bi_50
-```
-
-```{r randomforest_bi_100}
-rfc_bi_100 <- randomForest(x = as.data.frame(as.matrix(bigram_training)),
-                    y = token2_linkages$goal[train_ind2], nTree = 100)
-rfc_bi_100
-```
-
 ```{r predict_rfc}
-rfc_predict
+rfc_uni_50_pred <- predict(rfc_uni_50,
+                           newdata = unigram_testing)
 
-
-
-
-
+confusionMatrix(unigram_testing$goal, rfc_uni_50_pred)
 ```
 
 #### 5.3 KNN  
-
-We can also test a knn model to see the acuracies.
-First we Apply a 10 folds cross validation to the data.
+We can also test a knn model to see the accuracies. First apply a 10 folds cross validation to the data.
 ```{r knn_uni}
-knn_uni_training <- as.data.frame(as.matrix(unigram_training))
-knn_uni_training <- cbind(knn_uni_training, token1_linkages$goal[train_ind1])
-names(knn_uni_training)[232] <- "goal"
-
-# rule of thumb: k should be around the square root of the sample size.
-k = sqrt(sample_size1)
-
 # 10-fold cross validation
 trControl <- trainControl(method = "cv",
                           number = 10)
-
 ```
 
-Then estimate the model with at least three different values of k. Here we choose 80, 200 and 1000.
+Then estimate the model with at least three different values of k. Due to computational limitation we choose 80, 200 and 300 here.
 ```{r knn_uni}
-# 
 knn_uni <- train(goal ~ .,
                  method = "knn",
-                 tuneGrid = expand.grid(k = c(80, 200, 1000)),
+                 tuneGrid = expand.grid(k = c(80, 200, 300)),
                  trControl = trControl,
                  metric = "Accuracy",
-                 data = knn_uni_training)
+                 data = unigram_training)
+
 knn_uni
 
+# so we could use k = 300 here.
+knn_uni_final <- train(goal ~ .,
+                 method = "knn",
+                 tuneGrid = expand.grid(k = 300),
+                 trControl = trControl,
+                 metric = "Accuracy",
+                 data = unigram_training)
 
-# so we could use k = 88 here.
-knn_uni <-
-  nearest_neighbor(mode = "classification",
-                   neighbors = 88) %>%
-  set_engine(engine = "kknn") %>%
-  fit(
-    formula = goal ~ ., data = knn_uni_training)
-
-
+# make predictions
+knn_uni_final_pred <- predict(knn_uni_final,
+                              newdata = unigram_testing)
+confusionMatrix(unigram_testing$goal, knn_uni_final_pred)
 
 ```
-
+We can see from the accuracies that even given k = 300, the accuracy is only 0.42. So knn could be too computationally expensive here.  
 
 #### Neural Network
 ```{r nn_packaegs}
@@ -498,15 +483,29 @@ summary(nn_uni)
 
 test$pred_nn_training <- predict(nn_uni, test, type = "class")
 mtab <- table(test$pred_nn_training, test$goal)
+
 confusionMatrix(mtab)
 
 mtab
 
-
 ```
 
-#### Naive Bayes
+
 #### Comparison and conclusions
+
+```{r randomforest_bi_50, eval = FALSE}
+rfc_bi_50 <- randomForest(x = as.data.frame(as.matrix(bigram_training)),
+                    y = token2_linkages$goal[train_ind2], nTree = 50)
+rfc_bi_50
+```
+
+```{r randomforest_bi_100, eval = FALSE}
+rfc_bi_100 <- randomForest(x = as.data.frame(as.matrix(bigram_training)),
+                    y = token2_linkages$goal[train_ind2], nTree = 100)
+rfc_bi_100
+
+
+```
 
 
 
