@@ -24,7 +24,7 @@ Sustainable Development Goals, National Determined Contributions, Text Analysis,
 2. Sustainable Development Goals: [Sustainable Development Goals Knowledge Platform, United Nations](https://sustainabledevelopment.un.org/sdgs)
 3. NDC-SDG linkages analysis data: [Climate Watch, World Resources Institute.](https://www.climatewatchdata.org/data-explorer/ndc-sdg-linkages?ndc-sdg-linkages-countries=All%20Selected&ndc-sdg-linkages-goals=All%20Selected&ndc-sdg-linkages-sectors=All%20Selected&ndc-sdg-linkages-targets=All%20Selected&page=1)
 
-### Data Loading and Cleaning  
+### 1. Data Loading and Cleaning  
 ```{r install_package, include=FALSE}
 # data pre-processing packages
 library(tidyverse)
@@ -89,9 +89,9 @@ In our current NDC-SDG linkages database, there are already 9602 observations co
 
 In our analysis, the most used variables will be **ndc_text**, **goal** and **target**.
 
-### Exploratory Data Analysis  
+### 2. Exploratory Data Analysis  
 
-#### Treemap: Count  Statistics for NDC-SDG Linkages  
+#### 2.1 Treemap: Count  Statistics for NDC-SDG Linkages  
 First, we could use tree maps to visualize the count of sustainable development goals mentioned in countries' Nationally Determined Contribution submissions. We can tell from the tree map that, the most frequently mentioned sustainable development goals in countries' NDC submissions are **Goal 7** - Affordable and Clean Energy, **Goal 13** - Climate Action, **Goal 15** - Life on Land and **Goal 2** - Zero Hunger.  
 
 More Specifically, we can further conclude that within each SDG, which targets are mentioned the most frequently. For example, under **Goal 7** - Affordable and Clean Energy, the most popular targets are **Target 7.2** - By 2030, increase substantially the share of renewable energy in the global energy mix, and **Target 7.3** - By 2030, double the global rate of improvement in energy efficiency. 
@@ -113,12 +113,12 @@ treemap(tree_linkages,
         index = c("goal",
                   "target"),
         vSize = "n",
-        title = "Count Treemap for Sustainable Development Goals and Targets")
+        title = "Figure 2.1: Count Treemap for Sustainable Development Goals and Targets")
 
 ```
 
 
-#### Wordcloud: Trending Words for Each Sustainable Development Goals  
+#### 2.2 Wordcloud: Trending Words for Each Sustainable Development Goals  
 Then we can do some preliminary text processing and create a word cloud to see the trending words for each sustainable development goals linkages.  
 
 Here we use the most frequently tagged goal: **Goal 7** - Affordable and Clean Energy, as an example.  
@@ -161,12 +161,13 @@ goal7_corpus_refined <- tm_map(goal7_corpus_final, removeWords, custom_stop)
 wordcloud(goal7_corpus_refined, max.words = 50,
           colors = brewer.pal(6, "Dark2"),
           scale = c(3, 0.5), 
-          random.order = TRUE)
+          random.order = TRUE,
+          main = "Figure 2.2 Word Cloud for SDG 7, Sized by the Frequencies of the Word")
 ```
 
 From the wordcloud we can tell that, energy efficiency, renewable energy, electricity and solar are the most popular words in the countries' NDC content tagged to SDG-7.  
 
-### Tokenize the data
+### 3. Tokenize the data
 Then we may want to break the text into individual tokens which are simply individual words. Function **unnest_tokens** will be used here.  
 
 First we can tidy the data by removing special characters.
@@ -185,7 +186,7 @@ ndc_text <- gsub("[^A-Za-z]", " ", ndc_text)
 new_linkages$ndc_text <- ndc_text
 ```
 
-#### Unigram
+#### 3.1 Unigram
 Then we can create unigram, which only has one word in each individual tokens. Extra spaces and stop words should also be removed here.
 ```{r token_unigram}
 # break text into unigram
@@ -204,7 +205,7 @@ head(token1_linkages, 10)
 
 ```
 
-#### Bigram
+#### 3.2 Bigram
 Since tokenizing sentences to a unigram sometimes ignores the meaning of a word group collectively, we could further use a two word sequences which is "bigram".
 ```{r token_bigram}
 token2_linkages <- new_linkages %>%
@@ -235,13 +236,12 @@ head(token2_linkages, 10)
 ```
 
 
-### Remove sparse terms
 
 
-### Document Term Matrix with TF-IDF weighting
+### 4. Document Term Matrix with TF-IDF weighting
 Term frequency and inverse document frequency (TF-IDF) can help us decrease the weight of the common words, which are words that appear in all 17 goals. For those common words, both idf and thus tf-idf will be zero.  
 
-
+#### 4.1 Unigram
 ```{r tfidf1}
 # calculate the number of times that the unigram is used in that goal
 unigram_tfidf <- token1_linkages %>%
@@ -259,16 +259,16 @@ unigram_tfidf %>%
   arrange(desc(tf_idf)) %>%
   mutate(unigram = factor(unigram, levels = rev(unique(unigram)))) %>% 
   group_by(goal) %>% 
-  top_n(5) %>% 
+  slice(1:5) %>% 
   ungroup() %>%
   ggplot(aes(unigram, tf_idf, fill = goal)) +
   geom_col(show.legend = FALSE) +
-  labs(x = NULL, y = "tf-idf") +
+  labs(title = "Figure 5.1: The 5 unigrams with the highest tf-idf from each Sustainable Development Goals") +
   facet_wrap(~goal, ncol = 4, scales = "free") +
   coord_flip()
 ```
 
-
+#### 4.2 Bigram
 ```{r tfidf2}
 # calculate the number of times that the bigram is used in that goal
 bigram_tfidf <- token2_linkages %>%
@@ -283,21 +283,108 @@ bigram_tfidf %>%
   arrange(desc(tf_idf)) %>%
   mutate(bigram = factor(bigram, levels = rev(unique(bigram)))) %>% 
   group_by(goal) %>% 
-  top_n(5) %>%
+  slice(1:5) %>%
   ungroup() %>%
   ggplot(aes(bigram, tf_idf, fill = goal)) +
   geom_col(show.legend = FALSE) +
-  labs(x = NULL, y = "tf-idf") +
+  labs(title = "Figure 5.2: The 5 bigrams with the highest tf-idf from each Sustainable Development Goals") +
   facet_wrap(~goal, ncol = 4, scales = "free") +
   coord_flip()
+```
 
+#### 4.3 Remove sparse terms
+Now we can continue preparing the data to create the document term matrix with tf-idf weight.
+```{r dtm1}
+dtm_unigram <- token1_linkages %>%
+  count(id, unigram) %>%
+  cast_dtm(document = id,
+           term = unigram,
+           value = n,
+           weighting = tm::weightTfIdf)
+dtm_unigram
+```
+
+Using large, sparse matrices will make our modeling difficult. Of over 68348143 entries, only 114117 of them were non-zero, which might cause computation issues if we do a lot of complex modeling. As we can tell from the sparsity, we may want to remove sparse terms **removeSparseTerms()** can be used here.  
+
+Deciding on matrix sparsity depends on how many terms are in the matrix and how fast the computer is. We could try different numbers of maximum sparsity. 
+
+```{r sparse1}
+# try the value of .9
+dtm_unigram_1 <- dtm_unigram %>%
+  removeSparseTerms(sparse = .9)
+
+dtm_unigram_1
+
+# try the value of .99
+dtm_unigram_2 <- dtm_unigram %>%
+  removeSparseTerms(sparse = .99)
+
+dtm_unigram_2
+```
+
+Here I choose the value of 0.99 since it will give us 231 terms for prediction, which can save us a lot of time than previous 7130 terms and give us more preciseness than only 6 terms. Although the sparsity didn't change that much here, the number of terms is reduced greatly.
+
+```{r sparse1final}
+dtm_unigram <- dtm_unigram %>%
+  removeSparseTerms(sparse = .99)
+
+dtm_unigram
+```
+
+```{r dtm2}
+dtm_bigram <- token2_linkages %>%
+  count(id, bigram) %>%
+  cast_dtm(document = id,
+           term = bigram,
+           value = n,
+           weighting = tm::weightTfIdf)
+dtm_bigram
+```
+
+```{r sparse2}
+dtm_bigram <- dtm_bigram %>%
+  removeSparseTerms(sparse = .99)
+
+dtm_bigram
+```
+
+### 5. Classification Modeling (Unigram)
+#### 5.1 Split the data
+After we created the document-term matrix with TFIDF weighting for modeling, we can split the data to training and testing datasets. Put the testing set under lock and key.
+```{r split_data}
+# load packages for modeling
+library(tidymodels)
+library(caret)
+library(parsnip)
+library(kknn)
+library(randomForest)
+
+# set the seed
+set.seed(seed = 20200505)
+
+# create a split object. Here we set the proportion as 0.8.
+sample_size <- floor(0.8*nrow(dtm_unigram))
+train_ind <- sample(nrow(dtm_unigram), size = sample_size)
+
+# use the split object to create training and testing data
+unigram_training <- dtm_unigram[train_ind, ]
+unigram_testing <- dtm_unigram[-train_ind, ]
+```
+
+Due to computation cost consideration, I didn't include cross-validation here.  
+
+
+#### 5.2 Random Forest
+```{r randomforest_50}
+rfc_50 <- randomForest(x = as.data.frame(as.matrix(unigram_training)),
+                    y = token1_linkages$goal[train_ind], nTree = 50)
+rfc_50
 ```
 
 
-### Classification Modeling (bigram)
+
 #### knn
 #### Neural Network
-#### Random Forest
 
 ### Reference
 
