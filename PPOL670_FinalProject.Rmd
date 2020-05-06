@@ -513,28 +513,20 @@ nn_uni_final_pred <- predict(nn_uni_final,
 nn_uni_final_pred <- as.factor(nn_uni_final_pred)
 confusionMatrix(nn_uni_final_pred, unigram_testing$goal)
 ```
-The optimal neural network models here can give us the accuracy of 0.54.  
+The optimal neural network models here can give us the accuracy of 0.542.  
+
 Future Improvement: According to the confusion matrix, the positive prediction values for Goal 1, 4, 5, 8, 10, 16 are all zero. It may caused by the unbalanced distribution of classes in our sample data. So I need to consider a better split method before training the model.
 
 #### Comparison and conclusions  
 We need to consider both computational feasibility and model accuracy here when we are choosing the optimal model.  
 
-```{r final}
-final <-unigram_testing %>%
-  cbind(rfc_uni_100_pred) %>%
-  cbind(knn_uni_final_pred) %>%
-  cbind(nn_uni_final_pred)
-
-final <- final[, c(232, 233, 234, 235)]
+```{r summary_table}
+final_accuracy <- data.frame(c("Random Forest Model_50", "Random Forest Model_100", "KNN_80", "KNN_100", "KNN_300", "Neural Network_3", "Neural Network_4", "Neural Network_5"),
+           c("54.8%", "55.2%", "36.8%", "37.3%", "42.3%", "51.4%", "53.4%", "54.4%"))
+names(final_accuracy)[1] <- "Model"
+names(final_accuracy)[2] <- "Accuracy"
+final_accuracy
 ```
-
-```{r}
-for (i in 1:1920){
-  if (final[1] == final[2]){
-    
-  }
-}
-```
-
+According to the summary table, we can tell that the random forest model with nTree = 100 can yield the largest accuracy. Due to time and computational limitation I didn't use stratified method to split the training and testing dataset, and only unigrams are used in my models. Bigrams can also be used here to get a higher accuracy. 
 
 ### Reference
