@@ -373,17 +373,30 @@ unigram_testing <- dtm_unigram[-train_ind, ]
 
 Due to computation cost consideration, I didn't include cross-validation here.  
 
+After we created training and testing datasets, we can then train different models on the training dataset and report accuracy on the testing dataset.
 
 #### 5.2 Random Forest
+For random forest model, we can try different numbers of trees to compare the error rates.
 ```{r randomforest_50}
 rfc_50 <- randomForest(x = as.data.frame(as.matrix(unigram_training)),
                     y = token1_linkages$goal[train_ind], nTree = 50)
 rfc_50
 ```
 
+```{r randomforest_100}
+rfc_100 <- randomForest(x = as.data.frame(as.matrix(unigram_training)),
+                    y = token1_linkages$goal[train_ind], nTree = 100)
+rfc_100
+```
+
 
 
 #### knn
+```{r }
+
+```
+
+
 #### Neural Network
 
 ### Reference
