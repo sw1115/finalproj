@@ -1,0 +1,110 @@
+---
+title: "Tokenization"
+author: "Shiying Wang"
+date: "5/7/2020"
+output: html_document
+---
+```{r load, include = FALSE}
+load("data1.Rdata")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r install_package, include=FALSE}
+# data pre-processing packages
+library(tidyverse)
+library(purrr)
+
+# NLP processing pkgs
+library(tm)
+library(qdap)
+library(quanteda)
+library(tidytext)
+library(topicmodels)
+library(syuzhet)
+library(igraph)
+
+# data visualization packages
+library(ggplot2)
+library(wordcloud)
+library(maps)
+library(rJava)
+```
+
+### 3. Tokenize the data
+Then we may want to break the text into individual tokens which are simply individual words. Function **unnest_tokens** will be used here.
+
+First we can tidy the data by removing special characters.
+
+```{r clean}
+# only keep "id", "goal" and "ndc_text" columns.
+new_linkages <- select(linkages, id, goal, ndc_text)
+
+# convert to characters
+new_linkages$id <- as.character(new_linkages$id)
+new_linkages$ndc_text <- as.character(new_linkages$ndc_text)
+
+# remove special characters
+ndc_text <- new_linkages$ndc_text
+ndc_text <- gsub("[^A-Za-z]", " ", ndc_text)
+
+new_linkages$ndc_text <- ndc_text
+```
+
+#### 3.1 Unigram
+Then we can create unigram, which only has one word in each individual tokens. Extra spaces and stop words should also be removed here.
+```{r token_unigram}
+# break text into unigram
+token1_linkages <- new_linkages %>%
+  unnest_tokens(unigram,
+                ndc_text,
+                to_lower = TRUE)
+# check
+head(token1_linkages, 10)
+
+# remove the stop words
+token1_linkages <- token1_linkages %>%
+  filter(!unigram %in% stop_words$word)
+
+head(token1_linkages, 10)
+
+```
+
+#### 3.2 Bigram
+Since tokenizing sentences to a unigram sometimes ignores the meaning of a word group collectively, we could further use a two word sequences which is "bigram".
+```{r token_bigram}
+token2_linkages <- new_linkages %>%
+  unnest_tokens(bigram,
+                ndc_text,
+                token = "ngrams",
+                n = 2,
+                to_lower = TRUE)
+
+# check
+head(token2_linkages, 10)
+
+# remove the stop words
+## seperate two words
+token2_separated <- token2_linkages %>%
+  separate(bigram, c("word1", "word2"), sep = " ")
+
+token2_filtered <- token2_separated %>%
+  filter(!word1 %in% stop_words$word) %>%
+  filter(!word2 %in% stop_words$word)
+
+## recombine the words
+token2_linkages <- token2_filtered %>%
+  unite(bigram, word1, word2, sep = " ")
+
+head(token2_linkages, 10)
+
+```
+
+```{r save, include = FALSE}
+save.image("data2.Rdata")
+```

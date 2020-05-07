@@ -1,0 +1,173 @@
+---
+title: "Document Term Matrix with TF-IDF Weighting"
+author: "Shiying Wang"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r load, include = FALSE}
+load("data2.Rdata")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r install_package, include=FALSE}
+# data pre-processing packages
+library(tidyverse)
+library(purrr)
+
+# NLP processing pkgs
+library(tm)
+library(qdap)
+library(quanteda)
+library(tidytext)
+library(topicmodels)
+library(syuzhet)
+library(igraph)
+
+# data visualization packages
+library(ggplot2)
+library(wordcloud)
+library(maps)
+library(rJava)
+```
+
+### 4. Document Term Matrix with TF-IDF Weighting
+Term frequency and inverse document frequency (TF-IDF) can help us decrease the weight of the common words, which are words that appear in all 17 goals. For those common words, both idf and thus tf-idf will be zero.
+
+#### 4.1 Unigram
+```{r tfidf1}
+# calculate the number of times that the unigram is used in that goal
+unigram_tfidf <- token1_linkages %>%
+  count(goal, unigram, sort = TRUE)
+
+# calculate tfidf
+unigram_tfidf <- unigram_tfidf %>%
+  bind_tf_idf(unigram, goal, n) %>%
+  arrange(desc(tf_idf))
+
+unigram_tfidf
+
+# visualize the result
+unigram_tfidf %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(unigram = factor(unigram, levels = rev(unique(unigram)))) %>%
+  group_by(goal) %>%
+  slice(1:5) %>%
+  ungroup() %>%
+  ggplot(aes(unigram, tf_idf, fill = goal)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Figure 5.1: The 5 unigrams with the highest tf-idf from each Sustainable Development Goals") +
+  facet_wrap(~goal, ncol = 4, scales = "free") +
+  coord_flip()
+```
+
+#### 4.2 Bigram
+```{r tfidf2}
+# calculate the number of times that the bigram is used in that goal
+bigram_tfidf <- token2_linkages %>%
+  count(goal, bigram, sort = TRUE) %>%
+  bind_tf_idf(bigram, goal, n) %>%
+  arrange(desc(tf_idf))
+
+bigram_tfidf
+
+# visualize the result
+bigram_tfidf %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(bigram = factor(bigram, levels = rev(unique(bigram)))) %>%
+  group_by(goal) %>%
+  slice(1:5) %>%
+  ungroup() %>%
+  ggplot(aes(bigram, tf_idf, fill = goal)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Figure 5.2: The 5 bigrams with the highest tf-idf from each Sustainable Development Goals") +
+  facet_wrap(~goal, ncol = 4, scales = "free") +
+  coord_flip()
+```
+
+#### 4.3 Remove sparse terms
+Now we can continue preparing the data to create the document term matrix with tf-idf weight.
+
+* Document-term matrix for unigrams
+
+```{r dtm1}
+dtm_unigram <- token1_linkages %>%
+  count(id, unigram) %>%
+  cast_dtm(document = id,
+           term = unigram,
+           value = n,
+           weighting = tm::weightTfIdf)
+dtm_unigram
+```
+
+Using large, sparse matrices will make our modeling difficult. Of over 68348143 entries, only 114117 of them were non-zero, which might cause computation issues if we do a lot of complex modeling. As we can tell from the sparsity, we may want to remove sparse terms **removeSparseTerms()** can be used here.
+
+Deciding on matrix sparsity depends on how many terms are in the matrix and how fast the computer is. We could try different numbers of maximum sparsity.
+
+```{r sparse1}
+# try the value of .9
+dtm_unigram_1 <- dtm_unigram %>%
+  removeSparseTerms(sparse = .9)
+
+dtm_unigram_1
+
+# try the value of .99
+dtm_unigram_2 <- dtm_unigram %>%
+  removeSparseTerms(sparse = .99)
+
+dtm_unigram_2
+```
+
+Here I choose the value of 0.99 since it will give us 231 terms for prediction, which can save us a lot of time than previous 7130 terms and give us more preciseness than only 6 terms. Although the sparsity didn't change that much here, the number of terms is reduced greatly.
+
+```{r sparse1final}
+dtm_unigram <- dtm_unigram %>%
+  removeSparseTerms(sparse = .99)
+
+dtm_unigram
+```
+
+* Document-term matrix for bigrams
+
+```{r dtm2}
+dtm_bigram <- token2_linkages %>%
+  count(id, bigram) %>%
+  cast_dtm(document = id,
+           term = bigram,
+           value = n,
+           weighting = tm::weightTfIdf)
+dtm_bigram
+```
+
+```{r sparse2}
+# try the value of .9
+dtm_bigram_1 <- dtm_bigram %>%
+  removeSparseTerms(sparse = .99)
+
+dtm_bigram_1
+
+# try the value of .99
+dtm_bigram_2 <- dtm_bigram %>%
+  removeSparseTerms(sparse = .999)
+
+dtm_bigram_2
+```
+Here I choose the value of 0.999 since it will give us 653 terms for prediction, which can save us a lot of time than previous 23215 terms and give us more preciseness than only 14 terms.
+
+```{r sparse2final}
+dtm_bigram <- dtm_bigram %>%
+  removeSparseTerms(sparse = .999)
+
+dtm_bigram
+```
+
+
+```{r save, include = FALSE}
+save.image("data3.Rdata")
+```

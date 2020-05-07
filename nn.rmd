@@ -1,0 +1,96 @@
+---
+title: "Classification Modeling - K-Nearest neighbors"
+author: "Shiying Wang"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r load, include = FALSE}
+load("data5.Rdata")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r install_package, include=FALSE}
+# data pre-processing packages
+library(tidyverse)
+library(purrr)
+
+# NLP processing pkgs
+library(tm)
+library(qdap)
+library(quanteda)
+library(tidytext)
+library(topicmodels)
+library(syuzhet)
+library(igraph)
+
+# data visualization packages
+library(ggplot2)
+library(wordcloud)
+library(maps)
+library(rJava)
+
+# load packages for modeling
+library(tidymodels)
+library(caret)
+library(parsnip)
+library(kknn)
+library(randomForest)
+```
+
+#### Neural Network
+The third model will be the neural network model. A ten-fold cross validation is used here to find the optimal model. Due to computational limitation, I only used 100 iterations here. A larger number can be used here to improve the model accuracy.
+```{r nn_packaegs}
+library(nnet)
+```
+
+```{r nn_uni, results = 'hide'}
+# try different sizes here to see the change of accuracies
+nn_uni <- train(goal ~ .,
+                 method = "nnet",
+                 tuneGrid = expand.grid(size = seq(3, 5, 1), decay = 0),
+                 MaxNWts = 1500,
+                 maxit = 100,
+                 trControl = trControl,
+                 metric = "Accuracy",
+                 data = unigram_training)
+```
+
+The accuracy for each model could be reported here.
+```{r nn_uni_accuracy}
+nn_uni
+```
+
+According to the accuracy, we should choose size = 5 for the neural network model.
+```{r nn_uni_best, results = 'hide'}
+nn_uni_final <- train(goal ~ .,
+                 method = "nnet",
+                 tuneGrid = expand.grid(size = 5, decay = 0),
+                 MaxNWts = 1500,
+                 maxit = 100,
+                 trControl = trControl,
+                 metric = "Accuracy",
+                 data = unigram_training)
+```
+
+```{r nn_uni_predict}
+nn_uni_final_pred <- predict(nn_uni_final,
+                             newdata = unigram_testing,
+                             type = "raw")
+
+nn_uni_final_pred <- as.factor(nn_uni_final_pred)
+confusionMatrix(nn_uni_final_pred, unigram_testing$goal)
+```
+The optimal neural network models here can give us the accuracy of 0.542.  
+
+Future Improvement: According to the confusion matrix, the positive prediction values for Goal 1, 4, 5, 8, 10, 16 are all zero. It may caused by the unbalanced distribution of classes in our sample data. So I need to consider a better split method before training the model.
+
+```{r save, include = FALSE}
+save.image("data6.Rdata")
+```

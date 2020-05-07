@@ -1,0 +1,91 @@
+---
+title: "Classification Modeling - K-Nearest neighbors"
+author: "Shiying Wang"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r load, include = FALSE}
+load("data4.Rdata")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r install_package, include=FALSE}
+# data pre-processing packages
+library(tidyverse)
+library(purrr)
+
+# NLP processing pkgs
+library(tm)
+library(qdap)
+library(quanteda)
+library(tidytext)
+library(topicmodels)
+library(syuzhet)
+library(igraph)
+
+# data visualization packages
+library(ggplot2)
+library(wordcloud)
+library(maps)
+library(rJava)
+
+# load packages for modeling
+library(tidymodels)
+library(caret)
+library(parsnip)
+library(kknn)
+library(randomForest)
+```
+
+#### 5.3 KNN
+We can also test a knn model to see the accuracies. First apply a 10 folds cross validation to the data.
+```{r knn_cv}
+# 10-fold cross validation
+trControl <- trainControl(method = "cv",
+                          number = 10)
+```
+
+Then estimate the model with at least three different values of k. Here I choose 80, 200 and 300.
+```{r knn_uni, results = 'hide'}
+knn_uni <- train(goal ~ .,
+                 method = "knn",
+                 tuneGrid = expand.grid(k = c(80, 200, 300)),
+                 trControl = trControl,
+                 metric = "Accuracy",
+                 data = unigram_training)
+```
+
+We can report the accuracy for each model here, then choose the optimal one. Accuracy is the largest when k = 300, which is 0.423. So we will choose k = 300 here as our best knn model.  
+
+```{r knn_uni_accuracy}
+knn_uni
+```
+
+```{r knn_uni_final}
+# so we could use k = 300 here.
+knn_uni_final <- train(goal ~ .,
+                 method = "knn",
+                 tuneGrid = expand.grid(k = 300),
+                 trControl = trControl,
+                 metric = "Accuracy",
+                 data = unigram_training)
+
+# make predictions
+knn_uni_final_pred <- predict(knn_uni_final,
+                              newdata = unigram_testing)
+confusionMatrix(unigram_testing$goal, knn_uni_final_pred)
+```
+We can see from the accuracies that even given k = 300, the accuracy is only 0.42. So knn could be too computationally expensive here.  
+
+Future improvement: According to the confusion matrix, the balanced accuracy is NA for many classes. So the low accuracy here could be related to my method to split training and testing data, since the distribution of each classes is not quite balanced. A stratified method can be used here to split the training and testing data.
+
+```{r save, include = FALSE}
+save.image("data5.Rdata")
+```

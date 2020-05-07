@@ -1,0 +1,56 @@
+---
+title: "Comparison and conclusions"
+author: "Shiying Wang"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r load, include = FALSE}
+load("data5.Rdata")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r install_package, include=FALSE}
+# data pre-processing packages
+library(tidyverse)
+library(purrr)
+
+# NLP processing pkgs
+library(tm)
+library(qdap)
+library(quanteda)
+library(tidytext)
+library(topicmodels)
+library(syuzhet)
+library(igraph)
+
+# data visualization packages
+library(ggplot2)
+library(wordcloud)
+library(maps)
+library(rJava)
+```
+
+#### Comparison and conclusions  
+We need to consider both computational feasibility and model accuracy here when we are choosing the optimal model.  
+
+```{r summary_table}
+final_accuracy <- data.frame(c("Random Forest Model_50", "Random Forest Model_100", "KNN_80", "KNN_100", "KNN_300", "Neural Network_3", "Neural Network_4", "Neural Network_5"),
+           c("54.8%", "55.2%", "36.8%", "37.3%", "42.3%", "51.4%", "53.4%", "54.4%"))
+names(final_accuracy)[1] <- "Model"
+names(final_accuracy)[2] <- "Accuracy"
+final_accuracy
+```
+According to the summary table, we can tell that the random forest model with nTree = 100 can yield the largest accuracy. Due to time and computational limitation I didn't use stratified method to split the training and testing dataset, and only unigrams are used in my models. Bigrams can also be used here to get a higher accuracy. 
+
+### References
+1. [Text Mining with R](https://www.tidytextmining.com/dtm.html)
+2. [Nature Languages Corpus Data](http://norvig.com/ngrams/ch14.pdf)
+3. [Supervised Learning in R: Classification](https://learn.datacamp.com/courses/supervised-learning-in-r-classification)
+4. [Deep NLP - Triples](https://www.kaggle.com/manoharswamynathan/deep-nlp-triples)

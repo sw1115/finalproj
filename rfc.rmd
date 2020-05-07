@@ -1,0 +1,104 @@
+---
+title: "Classification Modeling - Random Forest"
+author: "Shiying Wang"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r load, include = FALSE}
+load("data3.Rdata")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(include = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r install_package, include=FALSE}
+# data pre-processing packages
+library(tidyverse)
+library(purrr)
+
+# NLP processing pkgs
+library(tm)
+library(qdap)
+library(quanteda)
+library(tidytext)
+library(topicmodels)
+library(syuzhet)
+library(igraph)
+
+# data visualization packages
+library(ggplot2)
+library(wordcloud)
+library(maps)
+library(rJava)
+```
+
+### 5. Classification Modeling (Unigram)
+#### 5.1 Split the data
+After we created the document-term matrix with TFIDF weighting for modeling, we can split the data to training and testing datasets. Put the testing set under lock and key.
+```{r split_unigram}
+# load packages for modeling
+library(tidymodels)
+library(caret)
+library(parsnip)
+library(kknn)
+library(randomForest)
+
+# set the seed
+set.seed(seed = 20200505)
+
+# tidying data for modeling
+uni_sample <- as.data.frame(as.matrix(dtm_unigram))
+uni_sample <- uni_sample[order(as.numeric(rownames(uni_sample))),,drop=FALSE]
+uni_sample <- cbind(uni_sample, goal = new_linkages$goal)
+
+# create a split object. Here we set the proportion as 0.8.
+split <- initial_split(uni_sample, prop = 0.8)
+
+# use the split object to create training and testing data
+unigram_training <- training(split)
+unigram_testing <- testing(split)
+```
+
+We can then run the same code on bigrams matrix to get the training and testing data. Due to computational limitation, I will only run the models on unigrams.
+
+After we created training and testing datasets, we can then train different models on the training dataset and report accuracy on the testing dataset.  
+
+Since the goal here is to get the most accuarte prediction of NDC-SDG linkages, I will focus on the accuracy metrics to choose the optimal model.
+
+#### 5.2 Random Forest
+For random forest model, we can try different numbers of trees to compare the error rates.
+```{r randomforest_uni_50}
+rfc_uni_50 <- randomForest(x = unigram_training[,-232],
+                           y = unigram_training$goal,
+                           nTree = 50)
+
+rfc_uni_50
+```
+
+OOB Error rate is 45.2% for nTree = 50.  
+
+```{r randomforest_uni_100}
+rfc_uni_100 <- randomForest(x = unigram_training[,-232],
+                            y = unigram_training$goal,
+                            nTree = 100)
+rfc_uni_100
+```
+OOB Error rate is 45.3% for nTree = 100.  
+
+So we can choose nTree = 100 as our final random forest model based on the balance of computational difficulties and model accuracy.
+```{r predict_rfc}
+rfc_uni_100_pred <- predict(rfc_uni_100,
+                           newdata = unigram_testing)
+
+confusionMatrix(unigram_testing$goal, rfc_uni_100_pred)
+```
+We can see from the accuracies that given nTree = 100, we can get the accuracy of 0.552. 
+
+```{r save, include = FALSE}
+save.image("data4.Rdata")
+```
