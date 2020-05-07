@@ -7,9 +7,9 @@ This is the public repository for final project, PPOL 670.
 ### Introduction
 This project aims to use supervised machine learning model to identify potential alignment between the targets, actions, policy measures and plans in countries' Nationally Determined Contributions (NDCs) and the Sustainable Development Goals (SDGs).  
 
+A Treemap is generated first to show the general distribution of NDC-SDG linkages. And Term Frequency - Inverse Document Frequency (tf-idf) is used here to further create the bar chart groups, which shows the important words for each sustainable development goals. Bigrams are also used here to analyze the relationships between words.
 
-
-And three supervised machine learning models will be used here: Random Forest, K-Nearest Neighbor, and Neural Network. The Random Forest model with number of trees equals to 100 will give us the largest accuracy, which is 
+And three supervised machine learning models are used here: Random Forest, K-Nearest Neighbor, and Neural Network. The Random Forest model with number of trees equals to 100 will give us the largest accuracy, which is 55.2%.
 
 ### Keywords
 Sustainable Development Goals, National Determined Contributions, Text Analysis, NLP, Classification

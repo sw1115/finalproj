@@ -1,5 +1,5 @@
-# McCourt Public Policy 670 - Final Project
+# Final Project for PPOL-670
 
-## Shiying Wang
+### Shiying Wang
 
 * [Page 1](https://sw1115.github.io/finalproj/page1)

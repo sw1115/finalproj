@@ -12,9 +12,14 @@ knitr::opts_chunk$set(include = TRUE)
 knitr::opts_chunk$set(warning = FALSE)
 ```
 
-## Which *Sustainable Development Goals (SDG)* are linked in the country's *National Determined Contributions (NDC)* document?  
+## Which *Sustainable Development Goals (SDG)* are linked in the country's *Nationally Determined Contributions (NDC)* document?  
 
-This project aims to use supervised machine learning model to identify potential alignment between the targets, actions, policy measures and plans in countries' Nationally Determined Contributions (NDCs) and the targets of the Sustainable Development Goals (SDGs).
+### Introduction
+This project aims to use supervised machine learning model to identify potential alignment between the targets, actions, policy measures and plans in countries' Nationally Determined Contributions (NDCs) and the Sustainable Development Goals (SDGs).  
+
+A Treemap is generated first to show the general distribution of NDC-SDG linkages. And Term Frequency - Inverse Document Frequency (tf-idf) is used here to further create the bar chart groups, which shows the important words for each sustainable development goals. Bigrams are also used here to analyze the relationships between words.  
+
+And three supervised machine learning models are used here: Random Forest, K-Nearest Neighbor, and Neural Network. The Random Forest model with number of trees equals to 100 will give us the largest accuracy, which is 55.2%.  
 
 ### Keywords
 Sustainable Development Goals, National Determined Contributions, Text Analysis, NLP, Classification
@@ -166,7 +171,10 @@ wordcloud(goal7_corpus_refined, max.words = 50,
           main = "Figure 2.2 Word Cloud for SDG 7, Sized by the Frequencies of the Word")
 ```
 
-From the wordcloud we can tell that, energy efficiency, renewable energy, electricity and solar are the most popular words in the countries' NDC content tagged to SDG-7.
+From the wordcloud we can tell that, energy efficiency, renewable energy, electricity and solar are the most popular words in the countries' NDC content tagged to SDG-7.  
+
+However, wordcloud can be hard to interpret sometimes and the simple count number of words may not give us much information. So more in-depth analysis with other methods such as n-grams and tf-idf should be considered next.  
+
 
 ### 3. Tokenize the data
 Then we may want to break the text into individual tokens which are simply individual words. Function **unnest_tokens** will be used here.
