@@ -20,7 +20,7 @@ Sustainable Development Goals, National Determined Contributions, Text Analysis,
 * Classification Modeling
   + [Random Forest](https://sw1115.github.io/finalproj/rfc)
   + [K-Nearest neighbors](https://sw1115.github.io/finalproj/knn)
-  + [K-Nearest neighbors](https://sw1115.github.io/finalproj/nn)
+  + [Neural Networks](https://sw1115.github.io/finalproj/nn)
 * [Comparison and conclusions](https://sw1115.github.io/finalproj/conclusion)
 
 

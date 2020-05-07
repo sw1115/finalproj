@@ -244,7 +244,7 @@ head(token2_linkages, 10)
 
 ```
 
-### 4. Document Term Matrix with TF-IDF weighting
+### 4. Document Term Matrix with TF-IDF Weighting
 Term frequency and inverse document frequency (TF-IDF) can help us decrease the weight of the common words, which are words that appear in all 17 goals. For those common words, both idf and thus tf-idf will be zero.
 
 #### 4.1 Unigram

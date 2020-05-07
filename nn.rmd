@@ -1,5 +1,5 @@
 ---
-title: "Classification Modeling - K-Nearest neighbors"
+title: "Classification Modeling - Neural Networks"
 author: "Shiying Wang"
 date: "5/7/2020"
 output: html_document
