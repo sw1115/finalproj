@@ -1,4 +1,4 @@
-# Which *Sustainable Development Goals (SDG)* are linked in the country's *National Determined Contributions (NDC)* document?  
+# Which *Sustainable Development Goals (SDG)* are linked in the country's *Nationally Determined Contributions (NDC)* document?  
 
 ## Shiying Wang
 
@@ -10,7 +10,7 @@ A Treemap is generated first to show the general distribution of NDC-SDG linkage
 And three supervised machine learning models are used here: Random Forest, K-Nearest Neighbor, and Neural Network. The Random Forest model with number of trees equals to 100 will give us the largest accuracy, which is 55.2%, and over 75% accuracy for Sustainable Development Goal 7, 13, 15, 17.
 
 ### Keywords
-Sustainable Development Goals, National Determined Contributions, Text Analysis, NLP, Classification
+Sustainable Development Goals, Nationally Determined Contributions, Text Analysis, NLP, Classification
 
 ### Table of Content
 * [Introduction](https://sw1115.github.io/finalproj/intro)

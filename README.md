@@ -2,7 +2,7 @@
 
 This is the public repository for final project, PPOL 670.
 
-## Which *Sustainable Development Goals (SDG)* are linked in the country's *National Determined Contributions (NDC)* document?  
+## Which *Sustainable Development Goals (SDG)* are linked in the country's *Nationally Determined Contributions (NDC)* document?  
 
 ### Introduction
 This project aims to use supervised machine learning model to identify potential alignment between the targets, actions, policy measures and plans in countries' Nationally Determined Contributions (NDCs) and the Sustainable Development Goals (SDGs).  
